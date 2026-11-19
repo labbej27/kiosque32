@@ -1,9 +1,27 @@
-/* Kiosque 32 : ressources (menus, boîte d'adresse, icône, version).
-   Fichier en UTF-8, converti en Windows-1252 par le Makefile. */
+/* Kiosque 32 / Kiosque 16 : ressources (menus, boîte d'adresse, icône,
+   version). Fichier en UTF-8, converti en Windows-1252 par le Makefile. */
 #include <windows.h>
 #include "ids.h"
 
+/* Le compilateur de ressources d'Open Watcom ne colle pas les chaînes :
+   chaque texte qui change est écrit en entier. */
+#ifdef KIOSQUE16
+#define DS_CENTER 0
+#define APP "Kiosque 16"
+#define EXE "KIOSQ16.EXE"
+#define OS 0x1L
+#define ABOUT_ITEM "À &propos de Kiosque 16"
+#define NOPREFIX "Sans préfixe, Kiosque 16 utilise telnet (port 23 par défaut)."
+#define DESCR "Kiosque 16, terminal Minitel telnet et WebSocket"
+#else
 LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+#define APP "Kiosque 32"
+#define EXE "KIOSQUE32.EXE"
+#define OS 0x4L
+#define ABOUT_ITEM "À &propos de Kiosque 32"
+#define NOPREFIX "Sans préfixe, Kiosque 32 utilise telnet (port 23 par défaut)."
+#define DESCR "Kiosque 32, terminal Minitel telnet et WebSocket"
+#endif
 
 IDI_KIOSQUE ICON "kiosque.ico"
 
@@ -37,7 +55,7 @@ BEGIN
     POPUP "&?"
     BEGIN
         MENUITEM "&Touches du clavier", IDC_KEYS
-        MENUITEM "À &propos de Kiosque 32", IDC_ABOUT
+        MENUITEM ABOUT_ITEM, IDC_ABOUT
     END
 END
 
@@ -50,7 +68,7 @@ BEGIN
     EDITTEXT IDE_ADDRESS, 8, 20, 224, 13, ES_AUTOHSCROLL
     LTEXT "telnet : hôte:port   (exemple : go.minipavi.fr:516)", -1, 8, 40, 224, 10
     LTEXT "WebSocket : ws://hôte:port/chemin   (exemple : ws://3611.re/ws)", -1, 8, 52, 224, 10
-    LTEXT "Sans préfixe, Kiosque 32 utilise telnet (port 23 par défaut).", -1, 8, 64, 224, 10
+    LTEXT NOPREFIX, -1, 8, 64, 224, 10
     DEFPUSHBUTTON "Connexion", IDOK, 128, 84, 50, 14
     PUSHBUTTON "Annuler", IDCANCEL, 182, 84, 50, 14
 END
@@ -58,20 +76,20 @@ END
 1 VERSIONINFO
 FILEVERSION 0,1,0,0
 PRODUCTVERSION 0,1,0,0
-FILEOS VOS__WINDOWS32
-FILETYPE VFT_APP
+FILEOS OS       /* VOS__WINDOWS16 ou VOS__WINDOWS32 */
+FILETYPE 0x1L    /* VFT_APP */
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
         BLOCK "040C04E4"
         BEGIN
             VALUE "CompanyName", "LABBEJ27"
-            VALUE "FileDescription", "Kiosque 32, terminal Minitel telnet et WebSocket"
+            VALUE "FileDescription", DESCR
             VALUE "FileVersion", "0.1"
             VALUE "InternalName", "kiosque32"
             VALUE "LegalCopyright", "(c) 2026 LABBEJ27, licence MIT"
-            VALUE "OriginalFilename", "KIOSQUE32.EXE"
-            VALUE "ProductName", "Kiosque 32"
+            VALUE "OriginalFilename", EXE
+            VALUE "ProductName", APP
             VALUE "ProductVersion", "0.1"
         END
     END

@@ -1,8 +1,16 @@
-# Kiosque 32
+# Kiosque 32 et Kiosque 16
 
-Terminal Minitel pour Windows, en **telnet** et en **WebSocket** (`ws://`).
-Un seul fichier `KIOSQUE32.EXE` d'environ 33 Ko, sans installation ni DLL :
-il tourne sur Windows 95, 98, Me, NT 4, 2000, XP et les versions suivantes.
+Terminal Minitel pour Windows, en **telnet** et en **WebSocket** (`ws://`),
+en deux versions tirées du même source :
+
+| Programme | Taille | Windows |
+|---|---|---|
+| `KIOSQUE32.EXE` (32 bits) | 33 Ko | 95, 98, Me, NT 4, 2000, XP et suivants, 32 et 64 bits |
+| `KIOSQ16.EXE` (16 bits) | 77 Ko | 3.1 et 3.11 (avec une pile TCP/IP : Trumpet Winsock, Microsoft TCP/IP-32…), 95, 98, Me, NT 4, 2000, XP 32 bits |
+
+Aucune installation ni DLL à ajouter (sous Windows 3.1, il faut seulement
+une pile TCP/IP qui fournit `WINSOCK.DLL`). Les Windows 64 bits ne lancent
+pas les programmes 16 bits : utiliser `KIOSQUE32.EXE`.
 
 C'est le petit frère de [Kiosque 64](../kiosque64) (C64), dont il reprend le
 décodeur Vidéotex et les couches telnet et WebSocket.
@@ -64,14 +72,22 @@ dans `kiosque32.ini`, à côté du programme.
 
 ## Compilation (sur Mac ou Linux)
 
-Il faut MinGW-w64 (`brew install mingw-w64`) et Python 3.
+Il faut MinGW-w64 (`brew install mingw-w64`) et Python 3 ; pour la version
+16 bits, Open Watcom v2 (instantané `ow-snapshot.tar.xz` de
+github.com/open-watcom/open-watcom-v2, binaires Mac dans `armo64/`) décompressé
+dans `~/Library/Caches/kiosque16/ow` (ou `make win16 OW=...`).
 
     make            # -> ~/Library/Caches/kiosque32/build/kiosque32.exe
+    make win16      # -> ~/Library/Caches/kiosque16/build/kiosq16.exe
     make imports    # fonctions Windows utilisées (toutes présentes sous Windows 95)
     make dist       # copie dans ~/Documents/dev/livrables/kiosque32
     make test       # banc d'essai sur Mac (connexion réelle, écran en PPM)
 
-Le programme n'est lié à aucune bibliothèque C : `src/mini.c` fournit les
+Le source Windows est `src/kiosque.c` ; `-DKIOSQUE16` choisit la version
+16 bits (WinMain, rappels `__export`, image d'écran en 16 couleurs rangée de
+bas en haut avec `-DFB_4BPP`, pour tenir dans un segment de 64 Ko).
+
+La version 32 bits n'est liée à aucune bibliothèque C : `src/mini.c` fournit les
 quelques fonctions de chaîne, le point d'entrée est `entry()` dans
 `src/win32.c`. L'en-tête PE annonce la version 4.0 du système, sans quoi
 Windows 9x/NT 4/2000 refusent de le lancer. Les sources sont en UTF-8 et sont

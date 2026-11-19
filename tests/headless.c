@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     if (connect(sock, ai->ai_addr, ai->ai_addrlen)) { perror("connect"); return 1; }
     vdt_reset();
     proto_init(kind, sink, out, 1234);
-    if (kind == NET_WS) proto_ws_open(argv[1], atoi(argv[2]), argv[4]);
+    if (kind == NET_WS) proto_ws_open(argv[1], (unsigned)atoi(argv[2]), argv[4]);
     t0 = tk = now();
     while (now() - t0 < atof(argv[6])) {
         struct pollfd p = { sock, POLLIN, 0 };
@@ -74,7 +74,11 @@ int main(int argc, char **argv)
     fprintf(f, "P6 %d %d 255\n", FB_W, FB_H);
     for (y = 0; y < FB_H; ++y)
         for (x = 0; x < FB_W; ++x)
+#ifdef FB_4BPP          /* image de Kiosque 16 : 4 bits, de bas en haut */
+            fwrite(pal[(fb[FB_H - 1 - y][x / 2] >> ((x & 1) ? 0 : 4)) & 15], 1, 3, f);
+#else
             fwrite(pal[fb[y][x]], 1, 3, f);
+#endif
     fclose(f);
     printf("état %d, écho %d, minuscules %d\n", proto_state, vdt_echo, vdt_lower);
     return 0;

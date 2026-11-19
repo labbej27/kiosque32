@@ -19,7 +19,7 @@ typedef void (*proto_out_fn)(const unsigned char *p, int n);
 /* Prépare une connexion ; seed sert aux clés de masquage WebSocket. */
 void proto_init(int kind, proto_sink_fn sink, proto_out_fn out, unsigned long seed);
 /* WebSocket : envoie la requête GET d'ouverture (une fois connecté). */
-void proto_ws_open(const char *host, int port, const char *path);
+void proto_ws_open(const char *host, unsigned int port, const char *path);
 /* Octets reçus du serveur. */
 void proto_feed(const unsigned char *p, int n);
 /* Octets à envoyer au serveur (frappe, réponse du terminal). */

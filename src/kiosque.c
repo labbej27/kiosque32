@@ -1,10 +1,18 @@
-/* Kiosque 32 : terminal Minitel pour Windows (95, 98, NT 4, 2000, XP et
-   suivants), en telnet et en WebSocket (ws://).
+/* Kiosque 32 / Kiosque 16 : terminal Minitel pour Windows, en telnet et en
+   WebSocket (ws://).
    (c) 2026 LABBEJ27 - licence MIT.
 
-   Interface Win32 seule (user32, gdi32), réseau Winsock 1.1 (wsock32)
-   en mode asynchrone (WSAAsyncSelect), aucune bibliothèque C. */
+   Un seul source pour deux programmes :
+   - Kiosque 32 (MinGW, i686) : Windows 95, 98, NT 4, 2000, XP et suivants,
+     sans bibliothèque C ;
+   - Kiosque 16 (Open Watcom, -DKIOSQUE16) : Windows 3.1 avec une pile
+     TCP/IP, 95, 98 et les NT 32 bits (2000, XP) qui lancent les programmes
+     16 bits.
+   Interface Windows de base (user, gdi), réseau Winsock 1.1 en mode
+   asynchrone (WSAAsyncSelect). */
+#ifndef KIOSQUE16
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #include <winsock.h>
 #include "mini.h"
@@ -13,9 +21,37 @@
 #include "vdt.h"
 #include "proto.h"
 
+#ifdef KIOSQUE16
+#define APP_NAME   "Kiosque 16"
+#define INI_NAME   "kiosq16.ini"
+#define CLASS_NAME "Kiosque16"
+#define EXPORT     __export          /* rappels appelés par Windows 3.x */
+#define TAB        "  "              /* MessageBox de Windows 3.1 : pas de tabulations */
+#define UI_FONT    ANSI_VAR_FONT
+#define HOME_TITLE " KIOSQUE 16"
+#define HOME_L1    "Version 16 bits : Windows 3.1, 95, 98,"
+#define HOME_L2    "NT 4, 2000 et XP 32 bits."
+#define ABOUT_OS   "pour Windows 3.1 (avec une pile TCP/IP), 95, 98,\nMe, NT 4, 2000 et XP 32 bits.\n\n"
+#else
 #define APP_NAME   "Kiosque 32"
-#define WM_SOCK    (WM_APP + 1)
-#define WM_HOST    (WM_APP + 2)
+#define INI_NAME   "kiosque32.ini"
+#define CLASS_NAME "Kiosque32"
+#define EXPORT
+#define TAB        "\t"
+#define UI_FONT    DEFAULT_GUI_FONT
+#define HOME_TITLE " KIOSQUE 32"
+#define HOME_L1    "Telnet et WebSocket, de Windows 95 à"
+#define HOME_L2    "aujourd'hui."
+#define ABOUT_OS   "pour Windows 95, 98, NT 4, 2000, XP et suivants.\n\n"
+#endif
+#ifndef MAX_PATH
+#define MAX_PATH   260
+#endif
+#ifndef MAKEWORD
+#define MAKEWORD(a, b) ((WORD)(((BYTE)(a)) | ((WORD)((BYTE)(b))) << 8))
+#endif
+#define WM_SOCK    (WM_USER + 101)
+#define WM_HOST    (WM_USER + 102)
 #define TIMER_TICK 1
 #define TIMER_WS   2
 #define BAR_H      30
@@ -24,7 +60,7 @@
 /* --- carnet d'adresses (le même que Kiosque 64) ------------------------ */
 struct site {
     const char *name, *host;
-    int port;
+    unsigned int port;
     const char *path;
     int kind;
     int echo;          /* écho local au départ (le serveur peut le changer par PRO3) */
@@ -54,7 +90,8 @@ static SOCKET sock = INVALID_SOCKET;
 static HANDLE host_req;
 static char host_buf[MAXGETHOSTSTRUCT];
 static char c_host[128], c_path[128], c_label[160];
-static int c_port, c_kind, c_echo = 1, echo_pref = 1;
+static unsigned int c_port;
+static int c_kind, c_echo = 1, echo_pref = 1;
 static char last_addr[200];
 
 static unsigned char outq[8192];
@@ -62,7 +99,7 @@ static int outq_len;
 
 /* --- petites aides ----------------------------------------------------- */
 
-static void put_num(char *q, int n)
+static void put_num(char *q, unsigned long n)
 {
     char d[12];
     int i = 0;
@@ -72,10 +109,10 @@ static void put_num(char *q, int n)
     *q = 0;
 }
 
-static int to_int(const char *s)
+static long to_long(const char *s)
 {
-    int n = 0;
-    while (*s >= '0' && *s <= '9') n = n * 10 + (*s++ - '0');
+    long n = 0;
+    while (*s >= '0' && *s <= '9' && n < 100000L) n = n * 10 + (*s++ - '0');
     return n;
 }
 
@@ -135,13 +172,18 @@ static void vtext(const char *s)
 
 static void vat(int row, int col)       /* col de 1 à 40 */
 {
-    unsigned char o[3] = { 0x1F, 0x40 + row, 0x40 + col };
+    unsigned char o[3];
+    o[0] = 0x1F;
+    o[1] = (unsigned char)(0x40 + row);
+    o[2] = (unsigned char)(0x40 + col);
     vdt_write(o, 3);
 }
 
 static void vesc(unsigned char c)
 {
-    unsigned char o[2] = { 0x1B, c };
+    unsigned char o[2];
+    o[0] = 0x1B;
+    o[1] = c;
     vdt_write(o, 2);
 }
 
@@ -237,7 +279,7 @@ static void set_title(void)
         strcat(t, " - ");
         strcat(t, c_label);
     }
-    SetWindowTextA(hwnd, t);
+    SetWindowText(hwnd, t);
     update_menu();
 }
 
@@ -245,29 +287,29 @@ static void save_settings(void)
 {
     char n[8];
     n[0] = 0; put_num(n, scale);
-    WritePrivateProfileStringA("kiosque", "taille", n, ini_path);
+    WritePrivateProfileString("kiosque", "taille", n, ini_path);
     n[0] = 0; put_num(n, grey);
-    WritePrivateProfileStringA("kiosque", "gris", n, ini_path);
+    WritePrivateProfileString("kiosque", "gris", n, ini_path);
     n[0] = 0; put_num(n, show_bar);
-    WritePrivateProfileStringA("kiosque", "barre", n, ini_path);
+    WritePrivateProfileString("kiosque", "barre", n, ini_path);
     n[0] = 0; put_num(n, echo_pref);
-    WritePrivateProfileStringA("kiosque", "echo", n, ini_path);
-    WritePrivateProfileStringA("kiosque", "adresse", last_addr, ini_path);
+    WritePrivateProfileString("kiosque", "echo", n, ini_path);
+    WritePrivateProfileString("kiosque", "adresse", last_addr, ini_path);
 }
 
 static void load_settings(void)
 {
     char *p;
-    GetModuleFileNameA(NULL, ini_path, sizeof(ini_path) - 16);
+    GetModuleFileName(hinst, ini_path, sizeof(ini_path) - 16);
     p = ini_path + strlen(ini_path);
     while (p > ini_path && p[-1] != '\\') --p;
-    strcpy(p, "kiosque32.ini");
-    scale = GetPrivateProfileIntA("kiosque", "taille", 2, ini_path);
+    strcpy(p, INI_NAME);
+    scale = GetPrivateProfileInt("kiosque", "taille", 2, ini_path);
     if (scale < 1 || scale > 3) scale = 2;
-    grey = GetPrivateProfileIntA("kiosque", "gris", 0, ini_path) != 0;
-    echo_pref = GetPrivateProfileIntA("kiosque", "echo", 1, ini_path) != 0;
-    show_bar = GetPrivateProfileIntA("kiosque", "barre", 1, ini_path) != 0;
-    GetPrivateProfileStringA("kiosque", "adresse", "go.minipavi.fr:516", last_addr,
+    grey = GetPrivateProfileInt("kiosque", "gris", 0, ini_path) != 0;
+    echo_pref = GetPrivateProfileInt("kiosque", "echo", 1, ini_path) != 0;
+    show_bar = GetPrivateProfileInt("kiosque", "barre", 1, ini_path) != 0;
+    GetPrivateProfileString("kiosque", "adresse", "go.minipavi.fr:516", last_addr,
                              sizeof(last_addr), ini_path);
 }
 
@@ -298,18 +340,20 @@ static void home_page(void)
     }
     vat(3, 11);
     vesc(0x54); vesc(0x4F); vesc(0x47);  /* fond bleu, double taille, blanc */
-    vtext(" KIOSQUE 32");
+    vtext(HOME_TITLE);
     vat(4, 7);
     vesc(0x54); vesc(0x46);
     vtext(" Terminal Minitel pour Windows");
     vat(6, 1);
     vesc(0x46);
-    vtext("Telnet et WebSocket, de Windows 95 à");
+    vtext(HOME_L1);
     vat(7, 1);
     vesc(0x46);
-    vtext("aujourd'hui.");
+    vtext(HOME_L2);
     for (i = 0; i < 5; ++i) {
-        char n[2] = { (char)('1' + i), 0 };
+        char n[2];
+        n[0] = (char)('1' + i);
+        n[1] = 0;
         vat(9 + 2 * i, 3);
         vesc(0x43); vesc(0x5D);         /* jaune, inversé */
         vtext(" "); vtext(n); vtext(" ");
@@ -417,7 +461,7 @@ static void start_connect(unsigned long addr)
         ended("Connexion refusée.");
 }
 
-static void connect_to(const char *host, int port, const char *path, int kind, int echo)
+static void connect_to(const char *host, unsigned int port, const char *path, int kind, int echo)
 {
     unsigned long a;
     char m[200];
@@ -539,10 +583,11 @@ static void on_sock(WPARAM wp, LPARAM lp)
 static void connect_address(const char *s)
 {
     char host[128], path[128];
-    int kind = NET_TELNET, port, i = 0;
+    int kind = NET_TELNET, i = 0;
+    long port;
     while (*s == ' ') ++s;
     if (starts(s, "wss://")) {
-        MessageBoxA(hwnd, "Les adresses wss:// (WebSocket chiffré) ne sont pas encore\n"
+        MessageBox(hwnd, "Les adresses wss:// (WebSocket chiffré) ne sont pas encore\n"
                           "prises en charge. Essayez ws:// ou telnet.", APP_NAME, MB_ICONINFORMATION);
         return;
     }
@@ -555,31 +600,35 @@ static void connect_address(const char *s)
     host[i] = 0;
     if (*s == ':') {
         ++s;
-        port = to_int(s);
+        port = to_long(s);
         while (*s >= '0' && *s <= '9') ++s;
     }
     i = 0;
     while (*s && *s != ' ' && i < (int)sizeof(path) - 1)
         path[i++] = *s++;
     path[i] = 0;
-    if (!host[0] || port <= 0 || port > 65535) {
-        MessageBoxA(hwnd, "Adresse incomplète.", APP_NAME, MB_ICONEXCLAMATION);
+    if (!host[0] || port <= 0 || port > 65535L) {
+        MessageBox(hwnd, "Adresse incomplète.", APP_NAME, MB_ICONEXCLAMATION);
         return;
     }
-    connect_to(host, port, path[0] ? path : "/", kind, echo_pref);
+    connect_to(host, (unsigned int)port, path[0] ? path : "/", kind, echo_pref);
 }
 
-static BOOL CALLBACK address_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp)
+BOOL CALLBACK EXPORT address_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp)
 {
     (void)lp;
     switch (msg) {
     case WM_INITDIALOG:
-        SetDlgItemTextA(dlg, IDE_ADDRESS, last_addr);
-        SendDlgItemMessageA(dlg, IDE_ADDRESS, EM_SETSEL, 0, -1);
+        SetDlgItemText(dlg, IDE_ADDRESS, last_addr);
+#ifdef KIOSQUE16
+        SendDlgItemMessage(dlg, IDE_ADDRESS, EM_SETSEL, 0, MAKELONG(0, 0x7FFF));
+#else
+        SendDlgItemMessage(dlg, IDE_ADDRESS, EM_SETSEL, 0, -1);
+#endif
         return TRUE;
     case WM_COMMAND:
         if (LOWORD(wp) == IDOK) {
-            GetDlgItemTextA(dlg, IDE_ADDRESS, last_addr, sizeof(last_addr));
+            GetDlgItemText(dlg, IDE_ADDRESS, last_addr, sizeof(last_addr));
             save_settings();
             EndDialog(dlg, 1);
             return TRUE;
@@ -594,7 +643,15 @@ static BOOL CALLBACK address_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp)
 
 static void ask_address(void)
 {
-    if (DialogBoxParamA(hinst, MAKEINTRESOURCEA(IDD_ADDRESS), hwnd, (DLGPROC)address_proc, 0) == 1)
+    int r;
+#ifdef KIOSQUE16
+    FARPROC p = MakeProcInstance((FARPROC)address_proc, hinst);
+    r = DialogBoxParam(hinst, MAKEINTRESOURCE(IDD_ADDRESS), hwnd, (DLGPROC)p, 0);
+    FreeProcInstance(p);
+#else
+    r = (int)DialogBoxParam(hinst, MAKEINTRESOURCE(IDD_ADDRESS), hwnd, (DLGPROC)address_proc, 0);
+#endif
+    if (r == 1)
         connect_address(last_addr);
 }
 
@@ -689,7 +746,9 @@ static void on_char(unsigned char c)
 
 /* --- dessin ---------------------------------------------------------------- */
 
+#ifndef FB_4BPP
 static unsigned char dib[FB_H][FB_W];
+#endif
 
 static void paint(HDC dc)
 {
@@ -714,13 +773,22 @@ static void paint(HDC dc)
     bi.h.biWidth = FB_W;
     bi.h.biHeight = FB_H;               /* image de bas en haut : la forme sûre */
     bi.h.biPlanes = 1;
+#ifdef FB_4BPP
+    bi.h.biBitCount = 4;                /* fb est déjà rangé de bas en haut */
+#else
     bi.h.biBitCount = 8;
+#endif
     bi.h.biCompression = BI_RGB;
     bi.h.biClrUsed = 16;
+#ifdef FB_4BPP
+    StretchDIBits(dc, x0, 0, screen_w(), FB_H * scale, 0, 0, FB_W, FB_H,
+                  (void FAR *)fb, (BITMAPINFO FAR *)&bi, DIB_RGB_COLORS, SRCCOPY);
+#else
     for (y = 0; y < FB_H; ++y)
         memcpy(dib[FB_H - 1 - y], fb[y], FB_W);
     StretchDIBits(dc, x0, 0, screen_w(), FB_H * scale, 0, 0, FB_W, FB_H,
                   dib, (BITMAPINFO *)&bi, DIB_RGB_COLORS, SRCCOPY);
+#endif
     /* curseur : pavé inversé, clignotant */
     if (state == ST_ONLINE && vdt_cursor_on && cur_vis && cur_row >= 0) {
         r.left = x0 + cur_col * 8 * scale;
@@ -746,17 +814,17 @@ static void paint(HDC dc)
 
 static const char keys_help[] =
     "Touches du Minitel :\n\n"
-    "Entrée\tEnvoi\n"
-    "Retour arrière\tCorrection\n"
-    "Échap\tAnnulation\n"
-    "F1 ou flèche gauche\tSommaire\n"
-    "F2\tGuide\n"
-    "F3 ou flèche haut\tRetour\n"
-    "F4 ou flèche droite\tRépétition\n"
-    "F5 ou flèche bas\tSuite\n"
-    "F6\tAnnulation\n"
-    "F7\tConnexion/Fin (Maj + Cnx/Fin)\n"
-    "F8\tDéconnexion\n\n"
+    "Entrée" TAB "Envoi\n"
+    "Retour arrière" TAB "Correction\n"
+    "Échap" TAB "Annulation\n"
+    "F1 ou flèche gauche" TAB "Sommaire\n"
+    "F2" TAB "Guide\n"
+    "F3 ou flèche haut" TAB "Retour\n"
+    "F4 ou flèche droite" TAB "Répétition\n"
+    "F5 ou flèche bas" TAB "Suite\n"
+    "F6" TAB "Annulation\n"
+    "F7" TAB "Connexion/Fin (Maj + Cnx/Fin)\n"
+    "F8" TAB "Déconnexion\n\n"
     "Comme sur un Minitel, les lettres sortent en majuscules tant que le\n"
     "service n'a pas choisi les minuscules ; Maj inverse la casse.\n"
     "Les lettres accentuées sont envoyées telles quelles.";
@@ -815,33 +883,33 @@ static void command(int id)
         layout();
         break;
     case IDC_KEYS:
-        MessageBoxA(hwnd, keys_help, APP_NAME, MB_ICONINFORMATION);
+        MessageBox(hwnd, keys_help, APP_NAME, MB_ICONINFORMATION);
         break;
     case IDC_ABOUT:
-        MessageBoxA(hwnd,
-            "Kiosque 32, version 0.1\n"
+        MessageBox(hwnd,
+            APP_NAME ", version 0.1\n"
             "Terminal Minitel en telnet et en WebSocket (ws://)\n"
-            "pour Windows 95, 98, NT 4, 2000, XP et suivants.\n\n"
+            ABOUT_OS
             "(c) 2026 LABBEJ27 - licence MIT\n"
             "Police : unscii de viznut (domaine public).\n\n"
-            "« Minitel » est une marque d'Orange ; Kiosque 32\n"
+            "« Minitel » est une marque d'Orange ; " APP_NAME "\n"
             "n'est pas lié à Orange.",
             APP_NAME, MB_ICONINFORMATION);
         break;
     }
 }
 
-static LRESULT CALLBACK wnd_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
+LRESULT CALLBACK EXPORT wnd_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_CREATE: {
         int i;
-        HFONT f = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+        HFONT f = (HFONT)GetStockObject(UI_FONT);
         for (i = 0; i < 9; ++i) {
-            buttons[i] = CreateWindowA("BUTTON", fkey_label[i],
+            buttons[i] = CreateWindow("BUTTON", fkey_label[i],
                                        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                                       0, 0, 10, 10, h, (HMENU)(INT_PTR)(IDC_FKEY + i), hinst, NULL);
-            SendMessageA(buttons[i], WM_SETFONT, (WPARAM)f, 0);
+                                       0, 0, 10, 10, h, (HMENU)(UINT)(IDC_FKEY + i), hinst, NULL);
+            SendMessage(buttons[i], WM_SETFONT, (WPARAM)f, 0);
         }
         return 0;
     }
@@ -903,33 +971,31 @@ static LRESULT CALLBACK wnd_proc(HWND h, UINT msg, WPARAM wp, LPARAM lp)
         PostQuitMessage(0);
         return 0;
     }
-    return DefWindowProcA(h, msg, wp, lp);
+    return DefWindowProc(h, msg, wp, lp);
 }
 
 /* --- démarrage --------------------------------------------------------------- */
 
-static int run(void)
+static int run(const char *cmd)
 {
-    WNDCLASSA wc;
+    WNDCLASS wc;
     WSADATA wsa;
     MSG m;
-    const char *cmd;
-    hinst = GetModuleHandleA(NULL);
     if (WSAStartup(MAKEWORD(1, 1), &wsa)) {
-        MessageBoxA(NULL, "Winsock (réseau TCP/IP) n'est pas installé.", APP_NAME, MB_ICONSTOP);
+        MessageBox(NULL, "Winsock (réseau TCP/IP) n'est pas installé.", APP_NAME, MB_ICONSTOP);
         return 1;
     }
     load_settings();
     memset(&wc, 0, sizeof(wc));
     wc.lpfnWndProc = wnd_proc;
     wc.hInstance = hinst;
-    wc.hIcon = LoadIconA(hinst, MAKEINTRESOURCEA(IDI_KIOSQUE));
-    wc.hCursor = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
+    wc.hIcon = LoadIcon(hinst, MAKEINTRESOURCE(IDI_KIOSQUE));
+    wc.hCursor = LoadCursor(NULL, (LPCSTR)IDC_ARROW);
     wc.hbrBackground = NULL;
-    wc.lpszMenuName = MAKEINTRESOURCEA(IDM_MAIN);
-    wc.lpszClassName = "Kiosque32";
-    RegisterClassA(&wc);
-    hwnd = CreateWindowA("Kiosque32", APP_NAME,
+    wc.lpszMenuName = MAKEINTRESOURCE(IDM_MAIN);
+    wc.lpszClassName = CLASS_NAME;
+    RegisterClass(&wc);                 /* sous Windows 3.x, échoue sans gravité si déjà fait */
+    hwnd = CreateWindow(CLASS_NAME, APP_NAME,
                          WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
                          CW_USEDEFAULT, CW_USEDEFAULT, 660, 580, NULL, NULL, hinst, NULL);
     layout();
@@ -939,23 +1005,33 @@ static int run(void)
     SetTimer(hwnd, TIMER_TICK, 100, NULL);
 
     /* kiosque32.exe [adresse] : connexion directe */
-    cmd = GetCommandLineA();
-    if (*cmd == '"') { ++cmd; while (*cmd && *cmd != '"') ++cmd; if (*cmd) ++cmd; }
-    else while (*cmd && *cmd != ' ') ++cmd;
     while (*cmd == ' ') ++cmd;
     if (*cmd)
         connect_address(cmd);
 
-    while (GetMessageA(&m, NULL, 0, 0) > 0) {
+    while (GetMessage(&m, NULL, 0, 0) > 0) {
         TranslateMessage(&m);
-        DispatchMessageA(&m);
+        DispatchMessage(&m);
     }
     WSACleanup();
     return 0;
 }
 
+#ifdef KIOSQUE16
+int PASCAL WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmd, int show)
+{
+    (void)prev; (void)show;
+    hinst = inst;
+    return run(cmd);
+}
+#else
 /* Point d'entrée du programme (pas de bibliothèque C, donc pas de WinMain). */
 void entry(void)
 {
-    ExitProcess((UINT)run());
+    const char *cmd = GetCommandLine();
+    hinst = GetModuleHandle(NULL);
+    if (*cmd == '"') { ++cmd; while (*cmd && *cmd != '"') ++cmd; if (*cmd) ++cmd; }
+    else while (*cmd && *cmd != ' ') ++cmd;
+    ExitProcess((UINT)run(cmd));
 }
+#endif

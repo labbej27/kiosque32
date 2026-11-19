@@ -157,7 +157,7 @@ static void ws_byte(unsigned char c)
     }
 }
 
-static void put_num(char *q, int n)
+static void put_num(char *q, unsigned int n)
 {
     char d[8];
     int i = 0;
@@ -167,7 +167,7 @@ static void put_num(char *q, int n)
     *q = 0;
 }
 
-void proto_ws_open(const char *host, int port, const char *path)
+void proto_ws_open(const char *host, unsigned int port, const char *path)
 {
     char q[400];
     if (strlen(host) + (path ? strlen(path) : 0) > 300)

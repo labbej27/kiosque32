@@ -1,5 +1,9 @@
-/* Kiosque 32 : image de l'écran Minitel, 320x250 points, 8 bits par point
-   (index de couleur : 0-7 couleurs du Minitel, 8-15 niveaux de gris). */
+/* Kiosque 32 : image de l'écran Minitel, 320x250 points ; index de couleur
+   0-7 (couleurs du Minitel) ou 8-15 (niveaux de gris).
+   - par défaut : 8 bits par point, rangées de haut en bas ;
+   - avec FB_4BPP (Kiosque 16) : 4 bits par point, rangées de bas en haut,
+     soit 40 000 octets, qui tiennent dans un segment de 64 Ko et se passent
+     tels quels à StretchDIBits. */
 #ifndef KIOSQUE_FB_H
 #define KIOSQUE_FB_H
 
@@ -13,7 +17,11 @@
 #define F_TOP   0x08            /* moitié haute (si double hauteur) */
 #define F_UL    0x10            /* souligné */
 
+#ifdef FB_4BPP
+extern unsigned char fb[FB_H][FB_W / 2];
+#else
 extern unsigned char fb[FB_H][FB_W];
+#endif
 extern int fb_dirty_top, fb_dirty_bottom;   /* rangées à redessiner, -1 = rien */
 
 void fb_cell(int row, int col, const unsigned char *src, unsigned char flags,
