@@ -8,6 +8,10 @@ en deux versions tirées du même source :
 | `KIOSQUE32.EXE` (32 bits) | 33 Ko | 95, 98, Me, NT 4, 2000, XP et suivants, 32 et 64 bits |
 | `KIOSQ16.EXE` (16 bits) | 77 Ko | 3.1 et 3.11 (avec une pile TCP/IP : Trumpet Winsock, Microsoft TCP/IP-32…), 95, 98, Me, NT 4, 2000, XP 32 bits |
 
+**Téléchargement :** [pré-version v0.1](https://github.com/labbej27/kiosque32/releases/tag/v0.1)
+(`KIOSQUE32.EXE`, `KIOSQ16.EXE` et `kiosque-0.1.zip`). Kiosque 16 n'a pas
+encore été testé.
+
 Aucune installation ni DLL à ajouter (sous Windows 3.1, il faut seulement
 une pile TCP/IP qui fournit `WINSOCK.DLL`). Les Windows 64 bits ne lancent
 pas les programmes 16 bits : utiliser `KIOSQUE32.EXE`.
