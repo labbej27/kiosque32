@@ -12,7 +12,7 @@ Aucune installation ni DLL à ajouter (sous Windows 3.1, il faut seulement
 une pile TCP/IP qui fournit `WINSOCK.DLL`). Les Windows 64 bits ne lancent
 pas les programmes 16 bits : utiliser `KIOSQUE32.EXE`.
 
-C'est le petit frère de [Kiosque 64](../kiosque64) (C64), dont il reprend le
+C'est le petit frère de [Kiosque 64](https://github.com/labbej27/kiosque64) (C64), dont il reprend le
 décodeur Vidéotex et les couches telnet et WebSocket.
 
 ## Utilisation
