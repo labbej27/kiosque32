@@ -8,9 +8,17 @@ en deux versions tirées du même source :
 | `KIOSQUE32.EXE` (32 bits) | 33 Ko | 95, 98, Me, NT 4, 2000, XP et suivants, 32 et 64 bits | Windows 2000 Pro ✅ |
 | `KIOSQ16.EXE` (16 bits) | 77 Ko | 3.1 et 3.11 (avec une pile TCP/IP : Trumpet Winsock, Microsoft TCP/IP-32…), 95, 98, Me, NT 4, 2000, XP 32 bits | Windows 2000 Pro ✅ |
 
-**Téléchargement :** [pré-version v0.1](https://github.com/labbej27/kiosque32/releases/tag/v0.1)
-(`KIOSQUE32.EXE`, `KIOSQ16.EXE` et `kiosque-0.1.zip`). Les deux versions
-fonctionnent sur Windows 2000 Pro ; les autres Windows restent à essayer.
+## Téléchargement (version 0.1)
+
+| Fichier | Pour |
+|---|---|
+| [**KIOSQUE32.EXE**](https://github.com/labbej27/kiosque32/releases/download/v0.1/KIOSQUE32.EXE) | Windows 95 à 11 (le plus courant) |
+| [**KIOSQ16.EXE**](https://github.com/labbej27/kiosque32/releases/download/v0.1/KIOSQ16.EXE) | Windows 3.1 / 3.11, ou si vous préférez la version 16 bits |
+| [**kiosque-0.1.zip**](https://github.com/labbej27/kiosque32/releases/download/v0.1/kiosque-0.1.zip) | les deux programmes et le mode d'emploi (`LISEZMOI.TXT`) |
+
+Toutes les versions : [page des versions](https://github.com/labbej27/kiosque32/releases).
+Les deux programmes fonctionnent sur Windows 2000 Pro ; les autres Windows
+restent à essayer.
 
 Aucune installation ni DLL à ajouter (sous Windows 3.1, il faut seulement
 une pile TCP/IP qui fournit `WINSOCK.DLL`). Les Windows 64 bits ne lancent
