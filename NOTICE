@@ -1,0 +1,11 @@
+Kiosque 32
+Copyright (c) 2026 LABBEJ27, MIT License (see LICENSE).
+
+Third-party components:
+
+- fonts/unscii-8.hex: unscii by viznut, public domain (http://viznut.fi/unscii/).
+
+The Videotex decoder and the telnet/WebSocket layers come from Kiosque 64
+(same author, MIT License).
+
+"Minitel" is a trademark of Orange. Kiosque 32 is not affiliated with Orange.

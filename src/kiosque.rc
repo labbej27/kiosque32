@@ -1,0 +1,82 @@
+/* Kiosque 32 : ressources (menus, boîte d'adresse, icône, version).
+   Fichier en UTF-8, converti en Windows-1252 par le Makefile. */
+#include <windows.h>
+#include "ids.h"
+
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+
+IDI_KIOSQUE ICON "kiosque.ico"
+
+IDM_MAIN MENU
+BEGIN
+    POPUP "&Connexion"
+    BEGIN
+        MENUITEM "&1  MiniPAVI\tgo.minipavi.fr", IDC_SITE + 0
+        MENUITEM "&2  LABBEJ27\tminitel.labbej.fr", IDC_SITE + 1
+        MENUITEM "&3  3615 co.de\tWebSocket", IDC_SITE + 2
+        MENUITEM "&4  3611.re\tWebSocket", IDC_SITE + 3
+        MENUITEM "&5  HACKER\tWebSocket", IDC_SITE + 4
+        MENUITEM SEPARATOR
+        MENUITEM "&Autre adresse...", IDC_OTHER
+        MENUITEM "&Déconnecter\tF8", IDC_HANGUP
+        MENUITEM "Écho &local", IDC_ECHO
+        MENUITEM SEPARATOR
+        MENUITEM "&Quitter", IDC_QUIT
+    END
+    POPUP "&Affichage"
+    BEGIN
+        MENUITEM "&Couleur", IDC_COLOR
+        MENUITEM "&Niveaux de gris", IDC_GREY
+        MENUITEM SEPARATOR
+        MENUITEM "Taille ×&1  (320 × 250)", IDC_SCALE + 1
+        MENUITEM "Taille ×&2  (640 × 500)", IDC_SCALE + 2
+        MENUITEM "Taille ×&3  (960 × 750)", IDC_SCALE + 3
+        MENUITEM SEPARATOR
+        MENUITEM "&Barre des touches", IDC_BAR
+    END
+    POPUP "&?"
+    BEGIN
+        MENUITEM "&Touches du clavier", IDC_KEYS
+        MENUITEM "À &propos de Kiosque 32", IDC_ABOUT
+    END
+END
+
+IDD_ADDRESS DIALOG 0, 0, 240, 104
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Autre adresse"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT "Adresse du service Minitel :", -1, 8, 8, 224, 10
+    EDITTEXT IDE_ADDRESS, 8, 20, 224, 13, ES_AUTOHSCROLL
+    LTEXT "telnet : hôte:port   (exemple : go.minipavi.fr:516)", -1, 8, 40, 224, 10
+    LTEXT "WebSocket : ws://hôte:port/chemin   (exemple : ws://3611.re/ws)", -1, 8, 52, 224, 10
+    LTEXT "Sans préfixe, Kiosque 32 utilise telnet (port 23 par défaut).", -1, 8, 64, 224, 10
+    DEFPUSHBUTTON "Connexion", IDOK, 128, 84, 50, 14
+    PUSHBUTTON "Annuler", IDCANCEL, 182, 84, 50, 14
+END
+
+1 VERSIONINFO
+FILEVERSION 0,1,0,0
+PRODUCTVERSION 0,1,0,0
+FILEOS VOS__WINDOWS32
+FILETYPE VFT_APP
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040C04E4"
+        BEGIN
+            VALUE "CompanyName", "LABBEJ27"
+            VALUE "FileDescription", "Kiosque 32, terminal Minitel telnet et WebSocket"
+            VALUE "FileVersion", "0.1"
+            VALUE "InternalName", "kiosque32"
+            VALUE "LegalCopyright", "(c) 2026 LABBEJ27, licence MIT"
+            VALUE "OriginalFilename", "KIOSQUE32.EXE"
+            VALUE "ProductName", "Kiosque 32"
+            VALUE "ProductVersion", "0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x040C, 1252
+    END
+END
