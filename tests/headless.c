@@ -22,7 +22,8 @@ static const unsigned char pal[16][3] = {
 };
 
 static void out(const unsigned char *p, int n) { if (write(sock, p, n) != n) perror("write"); }
-static void sink(unsigned char c) { vdt_put(c); }
+static FILE *dump;
+static void sink(unsigned char c) { if (dump) fputc(c, dump); vdt_put(c); }
 
 static int unescape(const char *s, unsigned char *o)
 {
@@ -48,6 +49,7 @@ int main(int argc, char **argv)
     if (getaddrinfo(argv[1], argv[2], &hints, &ai)) { fprintf(stderr, "dns\n"); return 1; }
     sock = socket(ai->ai_family, SOCK_STREAM, 0);
     if (connect(sock, ai->ai_addr, ai->ai_addrlen)) { perror("connect"); return 1; }
+    if (getenv("DUMP")) dump = fopen(getenv("DUMP"), "wb");
     vdt_reset();
     proto_init(kind, sink, out, 1234);
     if (kind == NET_WS) proto_ws_open(argv[1], (unsigned)atoi(argv[2]), argv[4]);
@@ -70,6 +72,7 @@ int main(int argc, char **argv)
             tk = now();
         }
     }
+    if (dump) fclose(dump);
     f = fopen(argv[5], "wb");
     fprintf(f, "P6 %d %d 255\n", FB_W, FB_H);
     for (y = 0; y < FB_H; ++y)

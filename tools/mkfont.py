@@ -44,8 +44,20 @@ def bits(*lines):
 
 SPECIAL = {
     0x5E: bits("...#....", "..###...", ".#.#.#..", "...#....", "...#....", "...#....", "...#....", "........"),
-    0x60: bits("........", "........", "........", "########", "........", "........", "........", "........"),
-    0x7E: bits("########", "........", "........", "........", "........", "........", "........", "........"),
+}
+
+# Traits du Minitel, sur toute la case de 8x10 pour se raccorder aux cases
+# voisines (les serveurs s'en servent pour dessiner des cadres et des logos,
+# par exemple celui de HACKER) : 0x5F trait en bas, 0x60 trait au milieu,
+# 0x7B trait à gauche, 0x7C trait vertical au milieu, 0x7D trait à droite,
+# 0x7E trait en haut.
+FULL = {
+    0x5F: bytes([0] * 9 + [0xFF]),
+    0x60: bytes([0] * 4 + [0xFF] + [0] * 5),
+    0x7B: bytes([0x80] * 10),
+    0x7C: bytes([0x18] * 10),
+    0x7D: bytes([0x01] * 10),
+    0x7E: bytes([0xFF] + [0] * 9),
 }
 LOW = "\x20ÂÉ£âÇËÀùÈŒÊ←î→↓°±éëïçûà÷èœê¼½¾ô"   # codes $00 à $1F
 
@@ -53,6 +65,9 @@ g0 = []
 for code in range(128):
     if code == 0x7F:
         g0.append(bytes([0xFF] * 10))
+        continue
+    if code in FULL:
+        g0.append(FULL[code])
         continue
     if code < 32:
         g = glyphs.get(ord(LOW[code]))
