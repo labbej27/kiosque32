@@ -146,7 +146,10 @@ static void render(void)
     } else {
         k = (t == T_DELIM) ? (b & B_BG) : z_bg;
         dc_src = font_g0 + (vch[r_idx] * 10);
-        dc_flags = vsz[r_idx] | (z_ul ? F_UL : 0);
+        /* un délimiteur n'est souligné que si le soulignement continue
+           des deux côtés : l'espace qui ouvre ou ferme une zone soulignée
+           ne l'est pas, comme sur un Minitel */
+        dc_flags = vsz[r_idx] | ((t == T_DELIM ? (z_ul && (b & B_ZUL)) : z_ul) ? F_UL : 0);
         if (z_mask && global_mask)
             dc_src = blank;
         if (at & A_INV) {
