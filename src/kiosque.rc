@@ -74,8 +74,8 @@ BEGIN
 END
 
 1 VERSIONINFO
-FILEVERSION 0,1,0,0
-PRODUCTVERSION 0,1,0,0
+FILEVERSION 0,1,1,0
+PRODUCTVERSION 0,1,1,0
 FILEOS OS       /* VOS__WINDOWS16 ou VOS__WINDOWS32 */
 FILETYPE 0x1L    /* VFT_APP */
 BEGIN
@@ -85,12 +85,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "LABBEJ27"
             VALUE "FileDescription", DESCR
-            VALUE "FileVersion", "0.1"
+            VALUE "FileVersion", "0.1.1"
             VALUE "InternalName", "kiosque32"
             VALUE "LegalCopyright", "(c) 2026 LABBEJ27, licence MIT"
             VALUE "OriginalFilename", EXE
             VALUE "ProductName", APP
-            VALUE "ProductVersion", "0.1"
+            VALUE "ProductVersion", "0.1.1"
         END
     END
     BLOCK "VarFileInfo"

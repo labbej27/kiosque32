@@ -8,17 +8,21 @@ en deux versions tirées du même source :
 | `KIOSQUE32.EXE` (32 bits) | 33 Ko | 95, 98, Me, NT 4, 2000, XP et suivants, 32 et 64 bits | Windows 2000 Pro ✅ |
 | `KIOSQ16.EXE` (16 bits) | 77 Ko | 3.1 et 3.11 (avec une pile TCP/IP : Trumpet Winsock, Microsoft TCP/IP-32…), 95, 98, Me, NT 4, 2000, XP 32 bits | Windows 2000 Pro ✅ |
 
-## Téléchargement (version 0.1)
+## Téléchargement (version 0.1.1)
 
 | Fichier | Pour |
 |---|---|
-| [**KIOSQUE32.EXE**](https://github.com/labbej27/kiosque32/releases/download/v0.1/KIOSQUE32.EXE) | Windows 95 à 11 (le plus courant) |
-| [**KIOSQ16.EXE**](https://github.com/labbej27/kiosque32/releases/download/v0.1/KIOSQ16.EXE) | Windows 3.1 / 3.11, ou si vous préférez la version 16 bits |
-| [**kiosque-0.1.zip**](https://github.com/labbej27/kiosque32/releases/download/v0.1/kiosque-0.1.zip) | les deux programmes et le mode d'emploi (`LISEZMOI.TXT`) |
+| [**KIOSQUE32.EXE**](https://github.com/labbej27/kiosque32/releases/download/v0.1.1/KIOSQUE32.EXE) | Windows 95 à 11 (le plus courant) |
+| [**KIOSQ16.EXE**](https://github.com/labbej27/kiosque32/releases/download/v0.1.1/KIOSQ16.EXE) | Windows 3.1 / 3.11, ou si vous préférez la version 16 bits |
+| [**kiosque-0.1.1.zip**](https://github.com/labbej27/kiosque32/releases/download/v0.1.1/kiosque-0.1.1.zip) | les deux programmes et le mode d'emploi (`LISEZMOI.TXT`) |
 
 Toutes les versions : [page des versions](https://github.com/labbej27/kiosque32/releases).
 Les deux programmes fonctionnent sur Windows 2000 Pro ; les autres Windows
 restent à essayer.
+
+**Nouveau dans la 0.1.1** : `{` `|` `}` sont des traits verticaux et `_` un
+trait en bas, comme sur un Minitel (le logo de HACKER s'affiche enfin
+correctement), et l'espace qui ferme une zone soulignée n'est plus soulignée.
 
 Aucune installation ni DLL à ajouter (sous Windows 3.1, il faut seulement
 une pile TCP/IP qui fournit `WINSOCK.DLL`). Les Windows 64 bits ne lancent
@@ -76,7 +80,7 @@ change, et les serveurs qui envoient la commande PRO3 le règlent eux-mêmes.
 ×2 ou ×3, barre des touches. Les réglages et la dernière adresse sont gardés
 dans `kiosque32.ini`, à côté du programme.
 
-## Limites (version 0.1)
+## Limites (version 0.1.1)
 
 - Pas de `wss://` (WebSocket chiffré) : Windows 2000 ne connaît pas TLS 1.2.
 - Les jeux de caractères redéfinis (DRCS) sont ignorés, comme dans Kiosque 64.

@@ -887,7 +887,7 @@ static void command(int id)
         break;
     case IDC_ABOUT:
         MessageBox(hwnd,
-            APP_NAME ", version 0.1\n"
+            APP_NAME ", version 0.1.1\n"
             "Terminal Minitel en telnet et en WebSocket (ws://)\n"
             ABOUT_OS
             "(c) 2026 LABBEJ27 - licence MIT\n"
